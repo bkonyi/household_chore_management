@@ -33,6 +33,21 @@ Map<String, String> _loadEnv() {
   return env;
 }
 
+AccessCredentials _credentialsFromMap(Map<String, Object?> tokenMap) {
+  final tokenData = tokenMap['accessToken'] as Map<String, Object?>;
+  final accessToken = AccessToken(
+    tokenData['type'] as String,
+    tokenData['data'] as String,
+    DateTime.parse(tokenData['expiry'] as String),
+  );
+  return AccessCredentials(
+    accessToken,
+    tokenMap['refreshToken'] as String?,
+    (tokenMap['scopes'] as List).cast<String>(),
+    idToken: tokenMap['idToken'] as String?,
+  );
+}
+
 void main() async {
   final env = _loadEnv();
 
@@ -79,22 +94,11 @@ void main() async {
   if (tokenFile.existsSync()) {
     final tokenJson = tokenFile.readAsStringSync();
     final tokenMap = jsonDecode(tokenJson) as Map<String, Object?>;
-    final tokenData = tokenMap['accessToken'] as Map<String, Object?>;
-
-    final accessToken = AccessToken(
-      tokenData['type'] as String,
-      tokenData['data'] as String,
-      DateTime.parse(tokenData['expiry'] as String),
-    );
-
-    final credentials = AccessCredentials(
-      accessToken,
-      tokenMap['refreshToken'] as String?,
-      (tokenMap['scopes'] as List).cast<String>(),
-      idToken: tokenMap['idToken'] as String?,
-    );
-
-    client = autoRefreshingClient(clientId, credentials, http.Client());
+    client = autoRefreshingClient(clientId, _credentialsFromMap(tokenMap), http.Client());
+  } else if (env['GOOGLE_TOKENS_JSON'] != null) {
+    final tokenJson = env['GOOGLE_TOKENS_JSON']!;
+    final tokenMap = jsonDecode(tokenJson) as Map<String, Object?>;
+    client = autoRefreshingClient(clientId, _credentialsFromMap(tokenMap), http.Client());
   } else {
     client = await clientViaUserConsent(clientId, scopes, (url) {
       print('Please go to the following URL and grant access:');
