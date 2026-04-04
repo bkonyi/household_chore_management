@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./credentials.json:/app/credentials.json
+      - ./tokens.json:/app/tokens.json
+    restart: unless-stopped
