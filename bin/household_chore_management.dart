@@ -60,7 +60,8 @@ void main() async {
   if (discordToken.isEmpty || sheetId.isEmpty || geminiApiKey.isEmpty) {
     print(
       'Warning: DISCORD_TOKEN, GOOGLE_SHEET_ID, or GEMINI_API_KEY is missing. '
-      'The app may fail if these are not provided via environment variables on Fly.io.',
+      'The app may fail if these are not provided via environment variables '
+      'on Fly.io.',
     );
   }
 
@@ -89,11 +90,19 @@ void main() async {
   if (tokenFile.existsSync()) {
     final tokenJson = tokenFile.readAsStringSync();
     final tokenMap = jsonDecode(tokenJson) as Map<String, Object?>;
-    client = autoRefreshingClient(clientId, _credentialsFromMap(tokenMap), http.Client());
+    client = autoRefreshingClient(
+      clientId,
+      _credentialsFromMap(tokenMap),
+      http.Client(),
+    );
   } else if (env['GOOGLE_TOKENS_JSON'] != null) {
     final tokenJson = env['GOOGLE_TOKENS_JSON']!;
     final tokenMap = jsonDecode(tokenJson) as Map<String, Object?>;
-    client = autoRefreshingClient(clientId, _credentialsFromMap(tokenMap), http.Client());
+    client = autoRefreshingClient(
+      clientId,
+      _credentialsFromMap(tokenMap),
+      http.Client(),
+    );
   } else {
     client = await clientViaUserConsent(clientId, scopes, (url) {
       print('Please go to the following URL and grant access:');

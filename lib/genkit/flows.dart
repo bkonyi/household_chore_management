@@ -379,7 +379,10 @@ $message
     final taskName = actionData['taskName'] as String?;
     final dueDateStr = actionData['dueDate'] as String?;
     
-    if (taskName != null && taskName.isNotEmpty && dueDateStr != null && dueDateStr.isNotEmpty) {
+    if (taskName != null &&
+        taskName.isNotEmpty &&
+        dueDateStr != null &&
+        dueDateStr.isNotEmpty) {
       DateTime? dueDate;
       try {
         dueDate = DateTime.parse(dueDateStr).toUtc();
@@ -417,12 +420,20 @@ $message
           }
         }
         
-        replies.add('I have updated the due date for "$taskName" to ${_formatDate(dueDate)}. ✅');
+        replies.add(
+          'I have updated the due date for "$taskName" to ${_formatDate(dueDate)}. ✅',
+        );
       } else {
-        replies.add('I understood you want to update a task, but I couldn\'t find a task named "$taskName" in your list.');
+        replies.add(
+          'I understood you want to update a task, but I couldn\'t find '
+          'a task named "$taskName" in your list.',
+        );
       }
     } else {
-      replies.add('I understood you want to update a task, but I didn\'t catch the name or the new due date.');
+      replies.add(
+        'I understood you want to update a task, but I didn\'t catch '
+        'the name or the new due date.',
+      );
     }
   }
 

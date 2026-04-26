@@ -162,11 +162,20 @@ void main() {
 ]
 ''';
 
-      final reply = await bot.getBotReply('Change due date of Feed geckos to 2026-05-01', []);
+      final reply = await bot.getBotReply(
+        'Change due date of Feed geckos to 2026-05-01',
+        [],
+      );
 
-      expect(reply, contains('I have updated the due date for "Feed geckos" to 2026-05-01. ✅'));
+      expect(
+        reply,
+        contains('I have updated the due date for "Feed geckos" to 2026-05-01. ✅'),
+      );
       expect(mockDb.updatedChores.length, 1);
-      expect(mockDb.updatedChores.first.dueDate, equals(DateTime.parse('2026-05-01').toUtc()));
+      expect(
+        mockDb.updatedChores.first.dueDate,
+        equals(DateTime.parse('2026-05-01').toUtc()),
+      );
     });
 
     test('Extract additional context to description works', () async {
@@ -183,11 +192,18 @@ void main() {
 ]
 ''';
 
-      final reply = await bot.getBotReply("Remind me to write a speech for Mac's wedding on June 5th with a due date a couple of weeks beforehand since it's high priority", []);
+      final reply = await bot.getBotReply(
+        "Remind me to write a speech for Mac's wedding on June 5th "
+        "with a due date a couple of weeks beforehand since it's high priority",
+        [],
+      );
 
       expect(reply, contains('I have added the task "Write a speech"'));
       expect(mockDb.chores.length, 1);
-      expect(mockDb.chores.first.description, equals("Mac's wedding on June 5th"));
+      expect(
+        mockDb.chores.first.description,
+        equals("Mac's wedding on June 5th"),
+      );
     });
   });
 }
