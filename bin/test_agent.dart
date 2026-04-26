@@ -38,7 +38,8 @@ void main() async {
   final testBotToken = env['TEST_BOT_TOKEN'];
   var testChannelId = env['TEST_CHANNEL_ID'];
   var choreBotId = env['CHORE_BOT_ID'];
-  final sheetId = env['GOOGLE_SHEET_ID']; // Main sheet or test sheet
+  final sheetId = env['TEST_GOOGLE_SHEET_ID'] ?? env['GOOGLE_SHEET_ID'];
+  final taskListId = env['TEST_TASK_LIST_ID'] ?? '@default';
 
   if (testBotToken == null ||
       testChannelId == null ||
@@ -110,7 +111,6 @@ void main() async {
   final sheetsApi = SheetsApi(client);
   final tasksApi = TasksApi(client);
   final sheetService = SheetService(sheetsApi, sheetId);
-  final taskListId = env['TASK_LIST_ID'] ?? '@default';
   final taskService = TaskService(tasksApi, taskListId: taskListId);
 
   print('Connecting to Discord as Test Agent...');
@@ -270,6 +270,60 @@ void main() async {
     expect(choreExists, false, 'Chore should not be added to sheet');
 
     print('Verified: Task in the past was rejected and not added!');
+
+    print('--- Scenario F: Update Task Due Date ---');
+    final testChoreName5 = 'Test Task UPDATE ${DateTime.now().millisecondsSinceEpoch}';
+    print('Adding task "$testChoreName5"...');
+    await sendAndReceive(
+      nyxxClient,
+      testChannelId,
+      choreBotId,
+      'Please add a chore called "$testChoreName5".',
+    );
+    
+    print('Updating due date for "$testChoreName5"...');
+    final updateReply = await sendAndReceive(
+      nyxxClient,
+      testChannelId,
+      choreBotId,
+      'Move due date of "$testChoreName5" to 2026-06-01.',
+    );
+    print('Bot replied: $updateReply');
+    
+    // Verify Sheet
+    final choresAfterUpdate = await sheetService.getChores();
+    final updatedChore = choresAfterUpdate.firstWhere(
+      (c) => c.taskName == testChoreName5,
+      orElse: () => throw Exception('Chore not found in sheet'),
+    );
+    expect(updatedChore.dueDate, DateTime.parse('2026-06-01').toUtc(), 'Due date should be updated');
+    
+    // Cleanup
+    await sheetService.removeChoreByName(testChoreName5);
+    print('Verified: Task due date updated and cleaned up!');
+
+    print('--- Scenario G: Extract Context ---');
+    final testChoreName6 = 'Test Task CONTEXT ${DateTime.now().millisecondsSinceEpoch}';
+    print('Adding task with context...');
+    final contextReply = await sendAndReceive(
+      nyxxClient,
+      testChannelId,
+      choreBotId,
+      'Remind me to do "$testChoreName6" for Mac\'s wedding on June 5th with a due date on 2026-05-22.',
+    );
+    print('Bot replied: $contextReply');
+    
+    // Verify Sheet
+    final choresAfterContext = await sheetService.getChores();
+    final contextChore = choresAfterContext.firstWhere(
+      (c) => c.taskName == testChoreName6,
+      orElse: () => throw Exception('Chore not found in sheet'),
+    );
+    expect(contextChore.description, "Mac's wedding on June 5th", 'Context should be extracted to description');
+    
+    // Cleanup
+    await sheetService.removeChoreByName(testChoreName6);
+    print('Verified: Context extracted to description and cleaned up!');
 
     print('\n🎉 All live suite scenarios PASSED! 🎉');
   } catch (e) {
