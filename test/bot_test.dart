@@ -85,13 +85,13 @@ void main() {
       mockDb.chores.add(task);
       mockAi.reminderResponse = 'You need to feed the geckos today!';
 
-      final reply = await bot.getBotReply('!list');
+      final reply = await bot.getBotReply('!list', []);
 
       expect(reply, equals('You need to feed the geckos today!'));
     });
 
     test('!list command returns empty message if no tasks', () async {
-      final reply = await bot.getBotReply('!list');
+      final reply = await bot.getBotReply('!list', []);
 
       expect(reply, equals('No chores found in the tracking sheet!'));
     });
@@ -99,7 +99,7 @@ void main() {
     test('!suggest passes constraints to GenKit correctly', () async {
       mockAi.suggestionResponse = 'How about cleaning the kitchen?';
 
-      final reply = await bot.getBotReply('!suggest 3 30');
+      final reply = await bot.getBotReply('!suggest 3 30', []);
 
       expect(reply, equals('How about cleaning the kitchen?'));
     });
@@ -116,7 +116,7 @@ void main() {
       );
       mockDb.chores.add(task);
 
-      final reply = await bot.getBotReply('!complete 222');
+      final reply = await bot.getBotReply('!complete 222', []);
 
       expect(reply, contains('Created new occurrence due:'));
       expect(mockDb.updatedChores.length, 1); // Marked old as complete
@@ -131,7 +131,7 @@ void main() {
     test('Unknown command falls back to processChat', () async {
       mockAi.chatResponse = 'I am a robot, hello!';
 
-      final reply = await bot.getBotReply('Hello bot');
+      final reply = await bot.getBotReply('Hello bot', []);
 
       expect(reply, equals('I am a robot, hello!'));
     });

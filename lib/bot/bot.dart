@@ -28,6 +28,9 @@ class DiscordBot {
   /// The ID of the bot user.
   Snowflake? _botId;
 
+  /// Conversation history per channel.
+  final Map<String, List<String>> _conversations = {};
+
   /// Creates a [DiscordBot].
   DiscordBot({
     required this.token,
@@ -61,15 +64,25 @@ class DiscordBot {
     if (event.message.author.id == _botId) return;
 
     final content = event.message.content.trim();
+    final channelId = event.message.channelId.toString();
 
-    final reply = await getBotReply(content);
+    final history = _conversations[channelId] ??= [];
+    history.add('User: $content');
+
+    // Limit history size
+    if (history.length > 20) {
+      history.removeRange(0, history.length - 20);
+    }
+
+    final reply = await getBotReply(content, history);
     if (reply.isNotEmpty) {
+      history.add('Bot: $reply');
       await event.message.channel.sendMessage(MessageBuilder(content: reply));
     }
   }
 
   /// Gets the bot's reply for a given message content.
-  Future<String> getBotReply(String content) async {
+  Future<String> getBotReply(String content, List<String> history) async {
     if (content == '!list') {
       return _getListReply();
     } else if (content == '!remind') {
@@ -82,7 +95,7 @@ class DiscordBot {
     } else if (content.startsWith('!snooze ')) {
       return _getSnoozeReply(content);
     } else {
-      return genKitService.processChat(content);
+      return genKitService.processChat(history.join('\n'));
     }
   }
 

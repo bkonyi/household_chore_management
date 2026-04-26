@@ -52,17 +52,16 @@ void main() async {
   final env = _loadEnv();
 
   // Read environment variables
-  final discordToken = env['DISCORD_TOKEN'];
-  final sheetId = env['GOOGLE_SHEET_ID'];
-  final geminiApiKey = env['GEMINI_API_KEY'];
+  final discordToken = env['DISCORD_TOKEN'] ?? '';
+  final sheetId = env['GOOGLE_SHEET_ID'] ?? '';
+  final geminiApiKey = env['GEMINI_API_KEY'] ?? '';
   final channelId = env['DISCORD_CHANNEL_ID'] ?? '0'; // For reminders
 
-  if (discordToken == null || sheetId == null || geminiApiKey == null) {
+  if (discordToken.isEmpty || sheetId.isEmpty || geminiApiKey.isEmpty) {
     print(
-      'Error: DISCORD_TOKEN, GOOGLE_SHEET_ID, and GEMINI_API_KEY '
-      'must be set in your .env file.',
+      'Warning: DISCORD_TOKEN, GOOGLE_SHEET_ID, or GEMINI_API_KEY is missing. '
+      'The app may fail if these are not provided via environment variables on Fly.io.',
     );
-    exit(1);
   }
 
   print('Starting Chore Agent...');
@@ -71,12 +70,8 @@ void main() async {
   final tokenFile = File('tokens.json');
   late final AutoRefreshingAuthClient client;
 
-  // Read credentials.json to get client ID and secret
-  final credentialsFile = File('credentials.json');
-  if (!credentialsFile.existsSync()) {
-    print('Error: credentials.json not found.');
-    exit(1);
-  }
+
+
   // Parse ClientId from JSON
   // Expecting format:
   // {"installed": {"client_id": "...", "client_secret": "..."}}
