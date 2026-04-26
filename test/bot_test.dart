@@ -50,7 +50,7 @@ class MockGenKitService extends GenKitService {
   }
 
   @override
-  Future<String> processChat(String content) async => chatResponse;
+  Future<String> callGemini(String prompt) async => chatResponse;
 }
 
 void main() {
@@ -134,6 +134,37 @@ void main() {
       final reply = await bot.getBotReply('Hello bot', []);
 
       expect(reply, equals('I am a robot, hello!'));
+    });
+
+    test('Update chore due date action works', () async {
+      final task = ChoreTask(
+        id: '1',
+        taskName: 'Feed geckos',
+        description: 'Feed them every other day',
+        dueDate: DateTime.now(),
+        difficulty: 2,
+        priority: 'high',
+        recurrenceRule: '',
+        lastCompletedAt: null,
+        googleTaskId: null,
+      );
+      mockDb.chores.add(task);
+      
+      mockAi.chatResponse = '''
+[
+  {
+    "action": "updateChoreDueDate",
+    "taskName": "Feed geckos",
+    "dueDate": "2026-05-01"
+  }
+]
+''';
+
+      final reply = await bot.getBotReply('Change due date of Feed geckos to 2026-05-01', []);
+
+      expect(reply, contains('I have updated the due date for "Feed geckos" to 2026-05-01. ✅'));
+      expect(mockDb.updatedChores.length, 1);
+      expect(mockDb.updatedChores.first.dueDate, equals(DateTime.parse('2026-05-01').toUtc()));
     });
   });
 }

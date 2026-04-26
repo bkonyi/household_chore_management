@@ -47,6 +47,20 @@ class TaskService {
     await tasksApi.tasks.update(task, taskListId, taskId);
   }
 
+  /// Updates a task's details in Google Tasks.
+  Future<void> updateTask(
+    String taskId, {
+    String? title,
+    String? notes,
+    DateTime? due,
+  }) async {
+    final task = await tasksApi.tasks.get(taskListId, taskId);
+    if (title != null) task.title = title;
+    if (notes != null) task.notes = notes;
+    if (due != null) task.due = due.toUtc().toIso8601String();
+    await tasksApi.tasks.update(task, taskListId, taskId);
+  }
+
   /// Retrieves all upcoming tasks that need action.
   Future<List<Task>> getUpcomingTasks() async {
     final response = await tasksApi.tasks.list(taskListId);

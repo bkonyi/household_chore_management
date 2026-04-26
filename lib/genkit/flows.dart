@@ -151,6 +151,13 @@ Mark a chore as completed:
   "taskName": "Fold laundry"
 }
 
+Update a chore due date:
+{
+  "action": "updateChoreDueDate",
+  "taskName": "Clean the kitchen",
+  "dueDate": "2026-05-01"
+}
+
 If the user is just chatting or you are just replying without performing an action, respond with a friendly natural language response. Do NOT use JSON if you are just chatting.
 
 Conversation:
@@ -209,6 +216,8 @@ $message
             await _handleRemoveChore(actionData, replies);
           } else if (action == 'completeChore') {
             await _handleCompleteChore(actionData, replies);
+          } else if (action == 'updateChoreDueDate') {
+            await _handleUpdateChoreDueDate(actionData, replies);
           }
         }
 
@@ -361,6 +370,58 @@ $message
         'I understood you want to complete a task, '
         'but I didn\'t catch the name.',
       );
+    }
+  }
+
+  Future<void> _handleUpdateChoreDueDate(
+      Map<String, Object?> actionData, List<String> replies) async {
+    final taskName = actionData['taskName'] as String?;
+    final dueDateStr = actionData['dueDate'] as String?;
+    
+    if (taskName != null && taskName.isNotEmpty && dueDateStr != null && dueDateStr.isNotEmpty) {
+      DateTime? dueDate;
+      try {
+        dueDate = DateTime.parse(dueDateStr).toUtc();
+      } catch (e) {
+        replies.add('Failed to parse the new due date: $dueDateStr');
+        return;
+      }
+      
+      final chores = await sheetService.getChores();
+      final taskIndex = chores.indexWhere(
+        (c) => c.taskName.toLowerCase() == taskName.toLowerCase(),
+      );
+      
+      if (taskIndex != -1) {
+        final task = chores[taskIndex];
+        final updatedTask = ChoreTask(
+          id: task.id,
+          taskName: task.taskName,
+          description: task.description,
+          dueDate: dueDate,
+          difficulty: task.difficulty,
+          priority: task.priority,
+          recurrenceRule: task.recurrenceRule,
+          lastCompletedAt: task.lastCompletedAt,
+          googleTaskId: task.googleTaskId,
+        );
+        
+        await sheetService.updateChore(updatedTask);
+        
+        if (taskService != null && task.googleTaskId != null) {
+          try {
+            await taskService!.updateTask(task.googleTaskId!, due: dueDate);
+          } catch (e) {
+            print('Failed to update Google Tasks: $e');
+          }
+        }
+        
+        replies.add('I have updated the due date for "$taskName" to ${_formatDate(dueDate)}. ✅');
+      } else {
+        replies.add('I understood you want to update a task, but I couldn\'t find a task named "$taskName" in your list.');
+      }
+    } else {
+      replies.add('I understood you want to update a task, but I didn\'t catch the name or the new due date.');
     }
   }
 
