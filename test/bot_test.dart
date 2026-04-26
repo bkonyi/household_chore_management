@@ -13,7 +13,9 @@ class MockChoreDatabase implements ChoreDatabase {
   Future<List<ChoreTask>> getChores() async => chores;
 
   @override
-  Future<void> addChore(ChoreTask task) async {}
+  Future<void> addChore(ChoreTask task) async {
+    chores.add(task);
+  }
 
   @override
   Future<String?> removeChoreByName(String taskName) async =>
@@ -165,6 +167,27 @@ void main() {
       expect(reply, contains('I have updated the due date for "Feed geckos" to 2026-05-01. ✅'));
       expect(mockDb.updatedChores.length, 1);
       expect(mockDb.updatedChores.first.dueDate, equals(DateTime.parse('2026-05-01').toUtc()));
+    });
+
+    test('Extract additional context to description works', () async {
+      mockAi.chatResponse = '''
+[
+  {
+    "action": "addChore",
+    "taskName": "Write a speech",
+    "description": "Mac's wedding on June 5th",
+    "difficulty": 3,
+    "priority": "high",
+    "dueDate": "2026-05-22"
+  }
+]
+''';
+
+      final reply = await bot.getBotReply("Remind me to write a speech for Mac's wedding on June 5th with a due date a couple of weeks beforehand since it's high priority", []);
+
+      expect(reply, contains('I have added the task "Write a speech"'));
+      expect(mockDb.chores.length, 1);
+      expect(mockDb.chores.first.description, equals("Mac's wedding on June 5th"));
     });
   });
 }
