@@ -9,6 +9,9 @@ primary_region = 'ord'
 [build]
   dockerfile = 'Dockerfile'
 
+[env]
+  TZ = "America/New_York"
+
 
 [[vm]]
   memory = '1gb'

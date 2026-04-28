@@ -169,7 +169,9 @@ void main() {
 
       expect(
         reply,
-        contains('I have updated the due date for "Feed geckos" to 2026-05-01. ✅'),
+        contains(
+          'I have updated the due date for "Feed geckos" to 2026-05-01. ✅',
+        ),
       );
       expect(mockDb.updatedChores.length, 1);
       expect(

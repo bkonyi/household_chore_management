@@ -421,7 +421,8 @@ $message
         }
         
         replies.add(
-          'I have updated the due date for "$taskName" to ${_formatDate(dueDate)}. ✅',
+          'I have updated the due date for "$taskName" to '
+          '${_formatDate(dueDate)}. ✅',
         );
       } else {
         replies.add(

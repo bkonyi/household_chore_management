@@ -272,7 +272,8 @@ void main() async {
     print('Verified: Task in the past was rejected and not added!');
 
     print('--- Scenario F: Update Task Due Date ---');
-    final testChoreName5 = 'Test Task UPDATE ${DateTime.now().millisecondsSinceEpoch}';
+    final testChoreName5 =
+        'Test Task UPDATE ${DateTime.now().millisecondsSinceEpoch}';
     print('Adding task "$testChoreName5"...');
     await sendAndReceive(
       nyxxClient,
@@ -296,20 +297,23 @@ void main() async {
       (c) => c.taskName == testChoreName5,
       orElse: () => throw Exception('Chore not found in sheet'),
     );
-    expect(updatedChore.dueDate, DateTime.parse('2026-06-01').toUtc(), 'Due date should be updated');
+    expect(updatedChore.dueDate, DateTime.parse('2026-06-01').toUtc(),
+        'Due date should be updated');
     
     // Cleanup
     await sheetService.removeChoreByName(testChoreName5);
     print('Verified: Task due date updated and cleaned up!');
 
     print('--- Scenario G: Extract Context ---');
-    final testChoreName6 = 'Test Task CONTEXT ${DateTime.now().millisecondsSinceEpoch}';
+    final testChoreName6 =
+        'Test Task CONTEXT ${DateTime.now().millisecondsSinceEpoch}';
     print('Adding task with context...');
     final contextReply = await sendAndReceive(
       nyxxClient,
       testChannelId,
       choreBotId,
-      'Remind me to do "$testChoreName6" for Mac\'s wedding on June 5th with a due date on 2026-05-22.',
+      'Remind me to do "$testChoreName6" for Mac\'s wedding on June 5th '
+      'with a due date on 2026-05-22.',
     );
     print('Bot replied: $contextReply');
     
@@ -319,7 +323,8 @@ void main() async {
       (c) => c.taskName == testChoreName6,
       orElse: () => throw Exception('Chore not found in sheet'),
     );
-    expect(contextChore.description, "Mac's wedding on June 5th", 'Context should be extracted to description');
+    expect(contextChore.description, "Mac's wedding on June 5th",
+        'Context should be extracted to description');
     
     // Cleanup
     await sheetService.removeChoreByName(testChoreName6);

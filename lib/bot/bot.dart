@@ -54,8 +54,8 @@ class DiscordBot {
 
     print('Chore Agent Bot is ready!');
 
-    // Start periodic check for reminders (e.g., every 12 hours)
-    Timer.periodic(const Duration(hours: 12), (timer) => _checkAndRemind());
+    // Schedule daily reminders at 8 AM
+    _scheduleDailyReminders(8, 0);
   }
 
   void _handleMessage(MessageCreateEvent event) async {
@@ -239,5 +239,26 @@ class DiscordBot {
         }
       }
     }
+  }
+
+  /// Schedules a daily reminder at the specified [hour] and [minute].
+  void _scheduleDailyReminders(int hour, int minute) {
+    final now = DateTime.now();
+    var next = DateTime(now.year, now.month, now.day, hour, minute);
+
+    // If it's already past the target time today, schedule for tomorrow
+    if (next.isBefore(now)) {
+      next = next.add(const Duration(days: 1));
+    }
+
+    final delay = next.difference(now);
+    print('Next reminder scheduled for $next '
+        '(in ${delay.inHours}h ${delay.inMinutes % 60}m)');
+
+    Timer(delay, () {
+      _checkAndRemind();
+      // Reschedule for the next day to keep it precise
+      _scheduleDailyReminders(hour, minute);
+    });
   }
 }
