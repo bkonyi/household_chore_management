@@ -112,7 +112,10 @@ $choresText
   Future<String> processChat(String message) async {
     await syncWithGoogleTasks();
     final chores = await sheetService.getChores();
-    final choresList = chores.map((c) => '- "${c.taskName}"').join('\n');
+    final choresList = chores
+        .map((c) => '- "${c.taskName}" (Difficulty: ${c.difficulty}, '
+            'Priority: ${c.priority}, Due: ${_formatDate(c.dueDate)})')
+        .join('\n');
 
     final prompt =
         '''
