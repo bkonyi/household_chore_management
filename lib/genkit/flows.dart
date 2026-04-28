@@ -30,7 +30,7 @@ class GenKitService {
     List<ChoreTask> upcomingChores,
   ) async {
     final choresText = upcomingChores
-        .map((c) => '- ${c.taskName} (Due: ${_formatDate(c.dueDate)})')
+        .map((c) => c.toContextString())
         .join('\n');
 
     final prompt =
@@ -69,11 +69,7 @@ $choresText
     String? weather,
   }) async {
     final choresText = matchingChores
-        .map(
-          (c) =>
-              '- ${c.taskName} (Difficulty: ${c.difficulty}, '
-              'Priority: ${c.priority})',
-        )
+        .map((c) => c.toContextString())
         .join('\n');
 
     final prompt =
@@ -113,8 +109,7 @@ $choresText
     await syncWithGoogleTasks();
     final chores = await sheetService.getChores();
     final choresList = chores
-        .map((c) => '- "${c.taskName}" (Difficulty: ${c.difficulty}, '
-            'Priority: ${c.priority}, Due: ${_formatDate(c.dueDate)})')
+        .map((c) => c.toContextString())
         .join('\n');
 
     final prompt =

@@ -84,6 +84,24 @@ class ChoreTask {
       googleTaskId,
     ];
   }
+
+  /// Returns a string representation of the task and its metadata for AI
+  /// context.
+  String toContextString() {
+    final dateStr = dueDate != null
+        ? '${dueDate!.year}-${dueDate!.month.toString().padLeft(2, '0')}-'
+            '${dueDate!.day.toString().padLeft(2, '0')}'
+        : 'No due date';
+    var context = '- "$taskName" (Difficulty: $difficulty, '
+        'Priority: $priority, Due: $dateStr)';
+    if (description.isNotEmpty) {
+      context += ' | Description: $description';
+    }
+    if (recurrenceRule != null && recurrenceRule!.isNotEmpty) {
+      context += ' | Recurrence: $recurrenceRule';
+    }
+    return context;
+  }
 }
 
 /// Abstract interface for interacting with the chore database.
