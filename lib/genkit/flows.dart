@@ -150,11 +150,24 @@ Mark a chore as completed:
   "taskName": "Fold laundry"
 }
 
+
 Update a chore due date:
 {
   "action": "updateChoreDueDate",
   "taskName": "Clean the kitchen",
   "dueDate": "2026-05-01"
+}
+
+Update a chore (any property like difficulty, priority, due date, description, name):
+{
+  "action": "updateChore",
+  "taskName": "Clean the kitchen",
+  "newTaskName": "Deep clean the kitchen",
+  "description": "Wash dishes, wipe counters",
+  "difficulty": 4,
+  "priority": "high",
+  "dueDate": "2026-05-01",
+  "recurrenceRule": "Every week"
 }
 
 If the user is just chatting or you are just replying without performing an action, respond with a friendly natural language response. Do NOT use JSON if you are just chatting.
@@ -215,8 +228,10 @@ $message
             await _handleRemoveChore(actionData, replies);
           } else if (action == 'completeChore') {
             await _handleCompleteChore(actionData, replies);
+          } else if (action == 'updateChore') {
+            await _handleUpdateChore(actionData, replies);
           } else if (action == 'updateChoreDueDate') {
-            await _handleUpdateChoreDueDate(actionData, replies);
+            await _handleUpdateChore(actionData, replies);
           }
         }
 
@@ -372,23 +387,10 @@ $message
     }
   }
 
-  Future<void> _handleUpdateChoreDueDate(
+  Future<void> _handleUpdateChore(
       Map<String, Object?> actionData, List<String> replies) async {
     final taskName = actionData['taskName'] as String?;
-    final dueDateStr = actionData['dueDate'] as String?;
-    
-    if (taskName != null &&
-        taskName.isNotEmpty &&
-        dueDateStr != null &&
-        dueDateStr.isNotEmpty) {
-      DateTime? dueDate;
-      try {
-        dueDate = DateTime.parse(dueDateStr).toUtc();
-      } catch (e) {
-        replies.add('Failed to parse the new due date: $dueDateStr');
-        return;
-      }
-      
+    if (taskName != null && taskName.isNotEmpty) {
       final chores = await sheetService.getChores();
       final taskIndex = chores.indexWhere(
         (c) => c.taskName.toLowerCase() == taskName.toLowerCase(),
@@ -396,14 +398,52 @@ $message
       
       if (taskIndex != -1) {
         final task = chores[taskIndex];
+        
+        final name = actionData.containsKey('newTaskName')
+            ? actionData['newTaskName'] as String? ?? task.taskName
+            : task.taskName;
+            
+        final description = actionData.containsKey('description')
+            ? actionData['description'] as String? ?? ''
+            : task.description;
+            
+        final difficulty = actionData.containsKey('difficulty')
+            ? (actionData['difficulty'] is int
+                ? actionData['difficulty'] as int
+                : int.tryParse(actionData['difficulty'].toString()) ?? task.difficulty)
+            : task.difficulty;
+            
+        final priority = actionData.containsKey('priority')
+            ? actionData['priority'] as String? ?? task.priority
+            : task.priority;
+            
+        final recurrenceRule = actionData.containsKey('recurrenceRule')
+            ? actionData['recurrenceRule'] as String?
+            : task.recurrenceRule;
+            
+        DateTime? dueDate = task.dueDate;
+        if (actionData.containsKey('dueDate')) {
+          final dueDateStr = actionData['dueDate'] as String?;
+          if (dueDateStr != null && dueDateStr.isNotEmpty) {
+            try {
+              dueDate = DateTime.parse(dueDateStr).toUtc();
+            } catch (e) {
+              replies.add('Failed to parse the new due date: $dueDateStr');
+              return;
+            }
+          } else {
+            dueDate = null;
+          }
+        }
+        
         final updatedTask = ChoreTask(
           id: task.id,
-          taskName: task.taskName,
-          description: task.description,
+          taskName: name,
+          description: description,
           dueDate: dueDate,
-          difficulty: task.difficulty,
-          priority: task.priority,
-          recurrenceRule: task.recurrenceRule,
+          difficulty: difficulty,
+          priority: priority,
+          recurrenceRule: recurrenceRule,
           lastCompletedAt: task.lastCompletedAt,
           googleTaskId: task.googleTaskId,
         );
@@ -412,16 +452,25 @@ $message
         
         if (taskService != null && task.googleTaskId != null) {
           try {
-            await taskService!.updateTask(task.googleTaskId!, due: dueDate);
+            await taskService!.updateTask(
+              task.googleTaskId!,
+              title: name,
+              notes: description,
+              due: dueDate,
+            );
           } catch (e) {
             print('Failed to update Google Tasks: $e');
           }
         }
         
-        replies.add(
-          'I have updated the due date for "$taskName" to '
-          '${_formatDate(dueDate)}. ✅',
-        );
+        if (actionData['action'] == 'updateChoreDueDate') {
+          replies.add(
+            'I have updated the due date for "$taskName" to '
+            '${_formatDate(dueDate)}. ✅',
+          );
+        } else {
+          replies.add('I have updated the task "$taskName". ✅');
+        }
       } else {
         replies.add(
           'I understood you want to update a task, but I couldn\'t find '
@@ -431,10 +480,11 @@ $message
     } else {
       replies.add(
         'I understood you want to update a task, but I didn\'t catch '
-        'the name or the new due date.',
+        'the name of the task.',
       );
     }
   }
+
 
   /// Calls the Gemini model with the given [prompt] and returns
   /// the text response.

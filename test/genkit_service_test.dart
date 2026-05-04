@@ -6,6 +6,7 @@ import 'package:test/test.dart';
 class MockSheetService implements ChoreDatabase {
   final List<ChoreTask> addedChores = [];
   final List<String> removedChores = [];
+  final List<ChoreTask> updatedChores = [];
   final List<ChoreTask> chores = [];
 
   MockSheetService();
@@ -17,7 +18,7 @@ class MockSheetService implements ChoreDatabase {
 
   @override
   Future<void> updateChore(ChoreTask task) async {
-    // No-op for this mock
+    updatedChores.add(task);
   }
 
   @override
@@ -156,6 +157,44 @@ void main() {
 
       expect(reply, contains('I detected a request to remove multiple tasks'));
       expect(mockSheet.removedChores.isEmpty, true); // Aborted!
+    });
+
+    test('Correctly updates all chore properties using updateChore', () async {
+      mockSheet.chores.add(
+        ChoreTask(
+          id: '789',
+          taskName: 'Clean floors',
+          description: 'Mop the floors',
+          dueDate: DateTime.now(),
+          difficulty: 2,
+          priority: 'medium',
+        ),
+      );
+
+      testService.mockResponse = '''
+{
+  "action": "updateChore",
+  "taskName": "Clean floors",
+  "newTaskName": "Deep clean floors",
+  "description": "Mop and wax the floors",
+  "difficulty": 4,
+  "priority": "high",
+  "dueDate": "2026-10-10"
+}
+''';
+
+      final reply = await testService.processChat(
+        'Update Clean floors to Deep clean floors, with difficulty 4, priority high, due Oct 10, and moping and waxing description',
+      );
+
+      expect(reply, contains('I have updated the task "Clean floors"'));
+      expect(mockSheet.updatedChores.length, 1);
+      final updated = mockSheet.updatedChores.first;
+      expect(updated.taskName, 'Deep clean floors');
+      expect(updated.description, 'Mop and wax the floors');
+      expect(updated.difficulty, 4);
+      expect(updated.priority, 'high');
+      expect(updated.dueDate, equals(DateTime.parse('2026-10-10').toUtc()));
     });
   });
 }

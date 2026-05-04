@@ -74,10 +74,23 @@ class DiscordBot {
       history.removeRange(0, history.length - 20);
     }
 
-    final reply = await getBotReply(content, history);
-    if (reply.isNotEmpty) {
-      history.add('Bot: $reply');
-      await event.message.channel.sendMessage(MessageBuilder(content: reply));
+    try {
+      final reply = await getBotReply(content, history);
+      if (reply.isNotEmpty) {
+        history.add('Bot: $reply');
+        await event.message.channel.sendMessage(MessageBuilder(content: reply));
+      }
+    } catch (e) {
+      print('Error handling message: $e');
+      if (e.toString().contains('invalid_grant')) {
+        await event.message.channel.sendMessage(MessageBuilder(
+          content: '⚠️ Google API Authentication has expired! An administrator needs to re-authenticate locally and update the Fly.io secrets.',
+        ));
+      } else {
+        await event.message.channel.sendMessage(MessageBuilder(
+          content: '⚠️ An error occurred while processing that request.',
+        ));
+      }
     }
   }
 
